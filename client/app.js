@@ -7,8 +7,13 @@ const messageContentInput = document.getElementById("message-content");
 
 let userName = "";
 
-const buttonLogin = document.getElementById("joinBtn")
+const buttonLogin = document.getElementById("joinBtn");
 const buttonSend = document.getElementById("sendBtn");
+
+const socket = io();
+socket.on('message', ({ author, content }) => addMessage(author, content));
+socket.on('join', ({ author, content }) => addMessage(author, content));
+socket.on('removeUser', ({ author, content }) => addMessage(author, content));
 
 buttonLogin.addEventListener('click', ev => login(ev));
 
@@ -19,24 +24,27 @@ function login(event) {
     const user = userNameInput.value;
 
     if (user.length === 0) {
-        alert('No user name!')
+        alert('No user name!');
     } else {
         userName = user;
         loginForm.classList.remove('show');
         messagesSection.classList.add('show');
+        socket.emit('join', {author: userName, content: userName + ' has joined the conversation!'});
     }
 }
 
 function sendMessage(event) {
     event.preventDefault();
 
-    const messageInput = messageContentInput.value;
+    let messageContent = messageContentInput.value;
 
-    if (messageInput.length === 0) {
-        alert('No message!')
-    } else {
-        addMessage(userName, messageInput);
-        messageContentInput.value = "";
+    if(!messageContent.length) {
+        alert('You have to type something!');
+    }
+    else {
+        addMessage(userName, messageContent);
+        socket.emit('message', { author: userName, content: messageContent });
+        messageContentInput.value = '';
     }
 }
 
